@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aami's Progress Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151a30;
+            --bg-card: #1a1f3a;
+            --accent-blue: #00d4ff;
+            --accent-green: #00ff88;
+            --accent-yellow: #ffd700;
+            --accent-red: #ff4444;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6b7280;
+            --border: rgba(0, 212, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: rgba(26, 31, 58, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem;
+            border-radius: 12px;
+        }
+
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #0099cc 100%);
+            color: var(--bg-primary);
+        }
+
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--accent-blue);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .metric-box:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .metric-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .water-tracker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .water-circle {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        .water-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .water-circle-bg {
+            fill: none;
+            stroke: rgba(0, 212, 255, 0.1);
+            stroke-width: 12;
+        }
+
+        .water-circle-progress {
+            fill: none;
+            stroke: var(--accent-blue);
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.6s ease-in-out;
+        }
+
+        .water-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .water-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            transition: all 0.3s ease;
+        }
+
+        .water-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .water-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .water-btn {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .water-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            transform: translateY(-2px);
+        }
+
+        .water-btn:active {
+            transform: translateY(0);
+        }
+
+        .progress-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px 12px 0 0;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid var(--border);
+        }
+
+        .section-header:hover {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-progress {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .progress-ring {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-blue) 0deg, rgba(0, 212, 255, 0.2) 0deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            position: relative;
+            transition: background 0.3s ease;
+        }
+
+        @keyframes ringGlow {
+            0%, 100% { box-shadow: 0 0 10px var(--accent-green); }
+            50% { box-shadow: 0 0 25px var(--accent-green), 0 0 40px var(--accent-green); }
+        }
+
+        .progress-ring.complete {
+            animation: ringGlow 2s infinite;
+        }
+
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .section-content.expanded {
+            max-height: 2000px;
+            padding: 1rem;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .checklist-item:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .checklist-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-blue);
+            cursor: pointer;
+        }
+
+        .checklist-label {
+            flex: 1;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .checklist-item:has(.checklist-checkbox:checked) {
+            opacity: 0.6;
+        }
+
+        .checklist-item:has(.checklist-checkbox:checked) .checklist-label {
+            text-decoration: line-through;
+        }
+
+        .task-input-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .task-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .task-delete {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .task-delete:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #0099cc 100%);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #00cc66 100%);
+            color: var(--bg-primary);
+            font-size: 1.25rem;
+            padding: 1.25rem 2.5rem;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 153, 204, 0.05) 100%);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--accent-blue);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 212, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        .stat-change.up {
+            color: var(--accent-green);
+        }
+
+        .stat-change.down {
+            color: var(--accent-red);
+        }
+
+        .stat-change.neutral {
+            color: var(--text-muted);
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            cursor: pointer;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .calendar-heatmap {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+        }
+
+        .calendar-day:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+
+        .calendar-day.empty {
+            background: rgba(0, 0, 0, 0.2);
+            cursor: default;
+        }
+
+        .calendar-day.excellent {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #00cc66 100%);
+            color: var(--bg-primary);
+        }
+
+        .calendar-day.good {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #0099cc 100%);
+            color: var(--bg-primary);
+        }
+
+        .calendar-day.moderate {
+            background: linear-gradient(135deg, var(--accent-yellow) 0%, #ffaa00 100%);
+            color: var(--bg-primary);
+        }
+
+        .calendar-day.poor {
+            background: linear-gradient(135deg, var(--accent-red) 0%, #cc0000 100%);
+            color: white;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, var(--accent-green) 0%, #00cc66 100%);
+            color: var(--bg-primary);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 255, 136, 0.4);
+            transform: translateY(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        .toast.perfect {
+            background: linear-gradient(135deg, var(--accent-yellow) 0%, #ffaa00 100%);
+            animation: sparkle 1s ease-in-out;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { box-shadow: 0 8px 24px rgba(255, 215, 0, 0.4); }
+            50% { box-shadow: 0 8px 40px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.6); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            position: relative;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 68, 68, 0.3);
+            color: var(--accent-red);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .workout-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .workout-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .workout-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 212, 255, 0.15);
+        }
+
+        .workout-day {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .workout-type {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .exercise-list {
+            list-style: none;
+        }
+
+        .exercise-item {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .exercise-item::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+        }
+
+        .streak-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #ff6b00 0%, #ff4400 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .history-table th {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent-blue);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .history-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .history-table tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .settings-section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .settings-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .settings-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .collapsible-trigger {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            margin-top: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .collapsible-trigger:hover {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.open {
+            max-height: 3000px;
+            margin-top: 1rem;
+        }
+
+        .arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .arrow.down {
+            transform: rotate(90deg);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .nav-tabs {
+                width: 100%;
+            }
+
+            .nav-tab {
+                flex: 1;
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .water-circle {
+                width: 160px;
+                height: 160px;
+            }
+
+            .water-value {
+                font-size: 2rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .settings-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="toast" class="toast"></div>
+
+    <div id="dayModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="app.closeDayModal()">×</button>
+            <div class="modal-title" id="modalDayTitle">Day Details</div>
+            <div id="modalDayContent"></div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="app.closeSettingsModal()">×</button>
+            <div class="modal-title">⚙️ Settings</div>
+            
+            <div class="settings-section">
+                <div class="settings-title">📥 Backup & Restore</div>
+                <div class="btn-group" style="margin-top: 1rem;">
+                    <button class="btn btn-primary" onclick="app.downloadBackup()">📥 Download Backup</button>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="backupFile" class="file-input" accept=".json">
+                        <button class="btn btn-secondary" style="width: 100%;">📤 Upload Backup</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">🔄 Reset Options</div>
+                <div class="btn-group" style="margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="app.resetTodayOnly()">🔄 Reset Today Only</button>
+                    <button class="btn btn-secondary" onclick="app.clearHistory()" style="border-color: var(--accent-red); color: var(--accent-red);">🗑️ Clear All History</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">💪 Aami's Dashboard</div>
+            <div class="nav-container">
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-tab="daily">📊 Daily</button>
+                    <button class="nav-tab" data-tab="workouts">🏋️ Workouts</button>
+                    <button class="nav-tab" data-tab="progress">📈 Progress</button>
+                </nav>
+                <button class="settings-btn" onclick="app.openSettingsModal()">⚙️ Settings</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="daily-tab" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h1 style="font-size: 2rem; font-weight: 700;">Today's Progress</h1>
+                <div id="streakBadge"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 Today's Metrics</div>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">💤 Sleep (hours)</div>
+                        <input type="number" id="sleepInput" class="metric-input" placeholder="8.5" step="0.5" min="0" max="24">
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">⚖️ Weight (lbs)</div>
+                        <input type="number" id="weightInput" class="metric-input" placeholder="114.8" step="0.1" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">💧 Water Intake</div>
+                <div class="card-subtitle">32oz Hydroflask - Track your 3 bottles (96 oz goal)</div>
+                <div class="water-tracker">
+                    <div class="water-circle">
+                        <svg width="200" height="200">
+                            <circle class="water-circle-bg" cx="100" cy="100" r="90"></circle>
+                            <circle id="waterProgress" class="water-circle-progress" cx="100" cy="100" r="90" 
+                                    stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
+                        </svg>
+                        <div class="water-center">
+                            <div class="water-value" id="waterValue">0</div>
+                            <div class="water-label">oz / 96</div>
+                        </div>
+                    </div>
+                    <div class="water-buttons">
+                        <button class="water-btn" onclick="app.addWater(16)">+16 oz (Half)</button>
+                        <button class="water-btn" onclick="app.addWater(32)">+32 oz (Full)</button>
+                        <button class="water-btn" style="border-color: var(--accent-red); color: var(--accent-red);" onclick="app.resetWater()">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">✅ My Tasks</div>
+                <div class="card-subtitle" id="taskCompletion">0/0 completed (0%)</div>
+                <div id="taskList"></div>
+                <div class="task-input-group">
+                    <input type="text" id="taskInput" class="task-input" placeholder="Add a new task...">
+                    <button class="btn btn-primary" onclick="app.addTask()">+ Add</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📋 Daily Progress</div>
+                
+                <div class="progress-section">
+                    <div class="section-header" data-section="wellness">
+                        <div class="section-title">
+                            <span>💚</span>
+                            <span>Wellness</span>
+                        </div>
+                        <div class="section-progress">
+                            <div class="progress-ring" id="wellnessRing">0%</div>
+                            <span class="arrow" id="wellnessArrow">▶</span>
+                        </div>
+                    </div>
+                    <div class="section-content" id="wellnessContent">
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="wellness">
+                            <label class="checklist-label">Sleep 8-9 hours</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="wellness">
+                            <label class="checklist-label">Drink 85-105 oz water</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="wellness">
+                            <label class="checklist-label">Take Creatine (3-5g)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="wellness">
+                            <label class="checklist-label">Protein powder post-workout</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="wellness">
+                            <label class="checklist-label">Take Multivitamin</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="wellness">
+                            <label class="checklist-label">Take Fish Oil</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <div class="section-header" data-section="fitness">
+                        <div class="section-title">
+                            <span>💪</span>
+                            <span>Fitness</span>
+                        </div>
+                        <div class="section-progress">
+                            <div class="progress-ring" id="fitnessRing">0%</div>
+                            <span class="arrow" id="fitnessArrow">▶</span>
+                        </div>
+                    </div>
+                    <div class="section-content" id="fitnessContent">
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="fitness">
+                            <label class="checklist-label">Complete workout</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="fitness">
+                            <label class="checklist-label">Stretching</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <div class="section-header" data-section="nutrition">
+                        <div class="section-title">
+                            <span>🍎</span>
+                            <span>Nutrition & Study</span>
+                        </div>
+                        <div class="section-progress">
+                            <div class="progress-ring" id="nutritionRing">0%</div>
+                            <span class="arrow" id="nutritionArrow">▶</span>
+                        </div>
+                    </div>
+                    <div class="section-content" id="nutritionContent">
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Eat Apples</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Eat Bananas</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Eat Berries</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Eat Oranges</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Eat Spinach</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Eat Broccoli</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Eat Carrots</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Complete schoolwork</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" class="checklist-checkbox" data-section="nutrition">
+                            <label class="checklist-label">Test preparation</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="app.endOfDay()">✅ End of Day — Save Progress</button>
+            </div>
+        </div>
+
+        <div id="workouts-tab" class="tab-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">🏋️ Workout Split</h1>
+            
+            <div class="workout-grid">
+                <div class="workout-card">
+                    <div class="workout-day">Day 1 - Push</div>
+                    <div class="workout-type">Chest, Shoulders, Triceps</div>
+                    <ul class="exercise-list">
+                        <li class="exercise-item">Incline DB Bench</li>
+                        <li class="exercise-item">Cable Lat Raise</li>
+                        <li class="exercise-item">Overhead Tricep Extensions</li>
+                        <li class="exercise-item">Machine Chest Flies</li>
+                        <li class="exercise-item">Dumbbell Shoulder Press</li>
+                        <li class="exercise-item">Cable Tricep Pushdowns</li>
+                    </ul>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                        <div style="color: var(--accent-yellow); font-weight: 600; margin-bottom: 0.5rem;">⚡ Finishers</div>
+                        <ul class="exercise-list">
+                            <li class="exercise-item">Bench Press</li>
+                            <li class="exercise-item">Dips</li>
+                            <li class="exercise-item">Push-ups</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="workout-card">
+                    <div class="workout-day">Day 2 - Pull</div>
+                    <div class="workout-type">Back, Biceps</div>
+                    <ul class="exercise-list">
+                        <li class="exercise-item">Seated Cable Rows</li>
+                        <li class="exercise-item">Preacher Curls</li>
+                        <li class="exercise-item">Lat Pulldowns</li>
+                        <li class="exercise-item">Cable Curls</li>
+                        <li class="exercise-item">Chest Supported Row</li>
+                        <li class="exercise-item">Face Pulls</li>
+                        <li class="exercise-item">Shrugs</li>
+                    </ul>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                        <div style="color: var(--accent-yellow); font-weight: 600; margin-bottom: 0.5rem;">⚡ Finishers</div>
+                        <ul class="exercise-list">
+                            <li class="exercise-item">Pull-ups</li>
+                            <li class="exercise-item">DB Rows</li>
+                            <li class="exercise-item">Hammer Curls</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="workout-card">
+                    <div class="workout-day">Day 3 - Athleticism</div>
+                    <div class="workout-type">Explosiveness, Speed, Power</div>
+                    <div style="margin-bottom: 1rem;">
+                        <div style="color: var(--accent-yellow); font-weight: 600; margin-bottom: 0.5rem;">🚀 Plyometrics</div>
+                        <ul class="exercise-list">
+                            <li class="exercise-item">Box Jumps – 4×5</li>
+                            <li class="exercise-item">Broad Jumps – 4×3</li>
+                            <li class="exercise-item">Depth Jumps – 3×5</li>
+                            <li class="exercise-item">Pogo Jumps – 4×10</li>
+                        </ul>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <div style="color: var(--accent-yellow); font-weight: 600; margin-bottom: 0.5rem;">💥 Explosive Strength</div>
+                        <ul class="exercise-list">
+                            <li class="exercise-item">Bulgarian Split Squats – 3×8</li>
+                            <li class="exercise-item">Push Press – 4×6</li>
+                            <li class="exercise-item">Med Ball Press Jumps – 3×8</li>
+                            <li class="exercise-item">Front Squats – 2×8</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="workout-card">
+                    <div class="workout-day">Day 4 - Legs</div>
+                    <div class="workout-type">Quads, Hamstrings, Glutes</div>
+                    <ul class="exercise-list">
+                        <li class="exercise-item">Seated Hamstring Curl</li>
+                        <li class="exercise-item">Back Squat</li>
+                        <li class="exercise-item">Leg Extension</li>
+                        <li class="exercise-item">Hip Abduction</li>
+                        <li class="exercise-item">DB Romanian Deadlift</li>
+                        <li class="exercise-item">Calf Raises</li>
+                    </ul>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                        <div style="color: var(--accent-yellow); font-weight: 600; margin-bottom: 0.5rem;">⚡ Finishers</div>
+                        <ul class="exercise-list">
+                            <li class="exercise-item">Bodyweight Squats</li>
+                            <li class="exercise-item">Wall Sits</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--accent-green);">📅 Every Day Maintenance</h2>
+                <div class="workout-grid">
+                    <div class="card">
+                        <div class="card-title">🧘 Stretching</div>
+                        <ul class="exercise-list">
+                            <li class="exercise-item">Hip Flexor Stretch</li>
+                            <li class="exercise-item">Inner Thigh Stretch</li>
+                            <li class="exercise-item">Hamstring Stretch</li>
+                            <li class="exercise-item">Middle Splits</li>
+                            <li class="exercise-item">Front Splits</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">💊 Supplements</div>
+                        <ul class="exercise-list">
+                            <li class="exercise-item">Creatine (3-5g daily)</li>
+                            <li class="exercise-item">Protein Powder</li>
+                            <li class="exercise-item">Multivitamin</li>
+                            <li class="exercise-item">Fish Oil</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🍎 Nutrition</div>
+                        <ul class="exercise-list">
+                            <li class="exercise-item">Fruits: Apples, Bananas, Berries, Oranges</li>
+                            <li class="exercise-item">Vegetables: Spinach, Broccoli, Carrots</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="progress-tab" class="tab-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">📈 Progress Dashboard</h1>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="avgChecklist">--</div>
+                    <div class="stat-label">Avg Daily Progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgWater">--</div>
+                    <div class="stat-label">Avg Water (oz)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgSleep">--</div>
+                    <div class="stat-label">Avg Sleep (h)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgTasks">--</div>
+                    <div class="stat-label">Avg Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="weightChange">--</div>
+                    <div class="stat-label">Weight Change (lbs)</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 Compare to Last Week</div>
+                <div class="stats-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Sleep Change</div>
+                        <div id="sleepChange" class="stat-change">--</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Water Change</div>
+                        <div id="waterChange" class="stat-change">--</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Progress Change</div>
+                        <div id="progressChange" class="stat-change">--</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Weight Change</div>
+                        <div id="weekWeightChange" class="stat-change">--</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Discipline Change</div>
+                        <div id="disciplineChange" class="stat-change">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📅 Weekly & Monthly Totals</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div>
+                        <h3 style="color: var(--accent-blue); margin-bottom: 1rem;">📆 7-Day Average</h3>
+                        <div class="metric-box">
+                            <div class="metric-label">Checklist %</div>
+                            <div id="week7Checklist" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Water (oz)</div>
+                            <div id="week7Water" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Sleep (h)</div>
+                            <div id="week7Sleep" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Tasks %</div>
+                            <div id="week7Tasks" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Discipline</div>
+                            <div id="week7Discipline" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--accent-green); margin-bottom: 1rem;">📆 30-Day Average</h3>
+                        <div class="metric-box">
+                            <div class="metric-label">Checklist %</div>
+                            <div id="month30Checklist" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Water (oz)</div>
+                            <div id="month30Water" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Sleep (h)</div>
+                            <div id="month30Sleep" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Tasks %</div>
+                            <div id="month30Tasks" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Discipline</div>
+                            <div id="month30Discipline" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">--</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--accent-yellow); margin-bottom: 1rem;">🏆 Best & Worst</h3>
+                        <div class="metric-box">
+                            <div class="metric-label">Best Discipline Day</div>
+                            <div id="bestDay" style="font-size: 1.2rem; font-weight: 600; color: var(--accent-green);">--</div>
+                        </div>
+                        <div class="metric-box" style="margin-top: 0.75rem;">
+                            <div class="metric-label">Worst Discipline Day</div>
+                            <div id="worstDay" style="font-size: 1.2rem; font-weight: 600; color: var(--accent-red);">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">📈 Weight Progression</div>
+                <canvas id="weightChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">📊 Daily Progress Completion</div>
+                <canvas id="progressChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">💧 Water Intake</div>
+                <canvas id="waterChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">😴 Sleep Hours</div>
+                <canvas id="sleepChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">🎯 Overall Discipline Score</div>
+                <canvas id="disciplineChart"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📅 Calendar Heatmap - Last 30 Days</div>
+                <div class="card-subtitle">Click any day to view details</div>
+                <div id="calendarHeatmap" class="calendar-heatmap"></div>
+            </div>
+
+            <div class="collapsible-trigger" onclick="app.toggleHistoryTable()">
+                <span class="arrow" id="historyArrow">▶</span>
+                <span style="flex: 1; font-weight: 600;">📋 View Complete History</span>
+            </div>
+            <div class="collapsible-content" id="historyContent">
+                <div style="overflow-x: auto;">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Progress %</th>
+                                <th>Tasks %</th>
+                                <th>Water (oz)</th>
+                                <th>Sleep (h)</th>
+                                <th>Weight (lb)</th>
+                                <th>Discipline</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted);">No data yet. Complete your first day!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 4rem; padding: 2rem; border-top: 1px solid var(--border);">
+            <div style="font-size: 1.1rem; font-weight: 600; color: var(--accent-blue); margin-bottom: 0.75rem;">Made by Ammar Jeevunjee</div>
+            <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+                <a href="https://instagram.com/free.aami" target="_blank" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;">📸 @free.aami</a>
+                <a href="https://tiktok.com/@sexy.aami" target="_blank" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;">🎵 @sexy.aami</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main application object for better organization
+        const app = {
+            // State
+            waterOz: 0,
+            charts: {},
+            
+            // Constants
+            WATER_GOAL: 96,
+            CIRCUMFERENCE: 565.48,
+            
+            // Initialize
+            init() {
+                this.loadWaterState();
+                this.loadChecklistState();
+                this.renderTasks();
+                this.prefillLastValues();
+                this.updateStreakBadge();
+                this.checkForNewDay();
+                this.bindEvents();
+                
+                // Check for new day every minute
+                setInterval(() => this.checkForNewDay(), 60000);
+            },
+            
+            // Event binding
+            bindEvents() {
+                // Nav tabs
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        this.switchTab(e.target.dataset.tab);
+                    });
+                });
+                
+                // Section headers
+                document.querySelectorAll('.section-header').forEach(header => {
+                    header.addEventListener('click', (e) => {
+                        this.toggleSection(e.currentTarget.dataset.section);
+                    });
+                });
+                
+                // Checklist checkboxes
+                document.querySelectorAll('.checklist-checkbox').forEach(cb => {
+                    cb.addEventListener('change', () => this.saveChecklistState());
+                });
+                
+                // Task input enter key
+                document.getElementById('taskInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.addTask();
+                });
+                
+                // File upload
+                document.getElementById('backupFile').addEventListener('change', (e) => this.uploadBackup(e));
+                
+                // Modal click outside
+                window.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal')) {
+                        e.target.classList.remove('show');
+                    }
+                });
+            },
+            
+            // Tab switching
+            switchTab(tab) {
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                
+                document.getElementById(`${tab}-tab`).classList.add('active');
+                document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+                if (tab === 'progress') {
+                    this.updateDashboard();
+                }
+            },
+            
+            // Toast notifications
+            showToast(message, isPerfect = false) {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.classList.toggle('perfect', isPerfect);
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            },
+            
+            // Water tracking
+            addWater(amount) {
+                this.waterOz = Math.min(this.waterOz + amount, this.WATER_GOAL);
+                this.updateWaterProgress();
+                this.saveWaterState();
+            },
+            
+            resetWater() {
+                this.waterOz = 0;
+                this.updateWaterProgress();
+                this.saveWaterState();
+            },
+            
+            updateWaterProgress() {
+                const progress = (this.waterOz / this.WATER_GOAL) * this.CIRCUMFERENCE;
+                const progressCircle = document.getElementById('waterProgress');
+                const valueDisplay = document.getElementById('waterValue');
+                
+                progressCircle.style.strokeDashoffset = this.CIRCUMFERENCE - progress;
+                valueDisplay.textContent = this.waterOz;
+            },
+            
+            saveWaterState() {
+                const state = { oz: this.waterOz, date: new Date().toDateString() };
+                localStorage.setItem('waterState', JSON.stringify(state));
+            },
+            
+            loadWaterState() {
+                const saved = localStorage.getItem('waterState');
+                if (saved) {
+                    const state = JSON.parse(saved);
+                    if (state.date === new Date().toDateString()) {
+                        this.waterOz = state.oz;
+                        this.updateWaterProgress();
+                    }
+                }
+            },
+            
+            // Task management
+            addTask() {
+                const input = document.getElementById('taskInput');
+                const text = input.value.trim();
+                if (!text) return;
+                
+                const tasks = this.getTasks();
+                tasks.push({ text, completed: false, id: Date.now() });
+                this.saveTasks(tasks);
+                this.renderTasks();
+                input.value = '';
+            },
+            
+            deleteTask(id) {
+                const tasks = this.getTasks().filter(t => t.id !== id);
+                this.saveTasks(tasks);
+                this.renderTasks();
+            },
+            
+            toggleTask(id) {
+                const tasks = this.getTasks();
+                const task = tasks.find(t => t.id === id);
+                if (task) task.completed = !task.completed;
+                this.saveTasks(tasks);
+                this.renderTasks();
+            },
+            
+            getTasks() {
+                const saved = localStorage.getItem('dailyTasks');
+                if (!saved) return [];
+                const data = JSON.parse(saved);
+                if (data.date !== new Date().toDateString()) return [];
+                return data.tasks || [];
+            },
+            
+            saveTasks(tasks) {
+                localStorage.setItem('dailyTasks', JSON.stringify({ 
+                    tasks, 
+                    date: new Date().toDateString() 
+                }));
+            },
+            
+            renderTasks() {
+                const tasks = this.getTasks();
+                const container = document.getElementById('taskList');
+                const completed = tasks.filter(t => t.completed).length;
+                const percent = tasks.length ? Math.round(completed/tasks.length * 100) : 0;
+                
+                document.getElementById('taskCompletion').textContent = 
+                    `${completed}/${tasks.length} completed (${percent}%)`;
+                
+                if (tasks.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">No tasks yet. Add one above!</p>';
+                    return;
+                }
+                
+                container.innerHTML = tasks.map(task => `
+                    <div class="task-item">
+                        <input type="checkbox" class="checklist-checkbox" ${task.completed ? 'checked' : ''} 
+                               onchange="app.toggleTask(${task.id})">
+                        <span class="checklist-label" style="flex: 1;">${this.escapeHtml(task.text)}</span>
+                        <button class="task-delete" onclick="app.deleteTask(${task.id})">Delete</button>
+                    </div>
+                `).join('');
+            },
+            
+            getTaskCompletionPercent() {
+                const tasks = this.getTasks();
+                if (!tasks.length) return 0;
+                const completed = tasks.filter(t => t.completed).length;
+                return Math.round((completed / tasks.length) * 100);
+            },
+            
+            // Section toggling
+            toggleSection(section) {
+                const content = document.getElementById(`${section}Content`);
+                const arrow = document.getElementById(`${section}Arrow`);
+                
+                content.classList.toggle('expanded');
+                arrow.classList.toggle('down');
+                
+                this.updateSectionProgress(section);
+            },
+            
+            updateSectionProgress(section) {
+                const checkboxes = document.querySelectorAll(`[data-section="${section}"]`);
+                const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+                const percent = checkboxes.length ? Math.round((checked / checkboxes.length) * 100) : 0;
+                
+                const ring = document.getElementById(`${section}Ring`);
+                const targetDeg = percent * 3.6;
+                
+                ring.style.background = `conic-gradient(var(--accent-blue) ${targetDeg}deg, rgba(0, 212, 255, 0.2) 0deg)`;
+                ring.textContent = `${percent}%`;
+                
+                if (percent === 100) {
+                    ring.classList.add('complete');
+                } else {
+                    ring.classList.remove('complete');
+                }
+            },
+            
+            getOverallChecklistPercent() {
+                const allCheckboxes = document.querySelectorAll('.checklist-checkbox');
+                if (!allCheckboxes.length) return 0;
+                const checked = Array.from(allCheckboxes).filter(cb => cb.checked).length;
+                return Math.round((checked / allCheckboxes.length) * 100);
+            },
+            
+            saveChecklistState() {
+                const checkboxes = document.querySelectorAll('.checklist-checkbox');
+                const state = {
+                    checks: Array.from(checkboxes).map(cb => cb.checked),
+                    date: new Date().toDateString()
+                };
+                localStorage.setItem('checklistState', JSON.stringify(state));
+                
+                ['wellness', 'fitness', 'nutrition'].forEach(section => {
+                    this.updateSectionProgress(section);
+                });
+            },
+            
+            loadChecklistState() {
+                const saved = localStorage.getItem('checklistState');
+                if (!saved) return;
+                
+                const state = JSON.parse(saved);
+                if (state.date !== new Date().toDateString()) return;
+                
+                const checkboxes = document.querySelectorAll('.checklist-checkbox');
+                checkboxes.forEach((cb, i) => {
+                    if (state.checks[i] !== undefined) {
+                        cb.checked = state.checks[i];
+                    }
+                });
+                
+                ['wellness', 'fitness', 'nutrition'].forEach(section => {
+                    this.updateSectionProgress(section);
+                });
+            },
+            
+            // Streak calculation
+            calculateStreak() {
+                const history = this.getHistory();
+                if (!history.length) return 0;
+                
+                let streak = 0;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                for (let i = history.length - 1; i >= 0; i--) {
+                    const entryDate = new Date(history[i].date);
+                    entryDate.setHours(0, 0, 0, 0);
+                    const daysDiff = Math.floor((today - entryDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysDiff === streak) {
+                        streak++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return streak;
+            },
+            
+            updateStreakBadge() {
+                const streak = this.calculateStreak();
+                const badge = document.getElementById('streakBadge');
+                if (streak > 0) {
+                    badge.innerHTML = `<span class="streak-badge">🔥 ${streak} day${streak > 1 ? 's' : ''} streak!</span>`;
+                } else {
+                    badge.innerHTML = '';
+                }
+            },
+            
+            // End of day
+            endOfDay() {
+                const sleep = parseFloat(document.getElementById('sleepInput').value) || 0;
+                const weight = parseFloat(document.getElementById('weightInput').value) || 0;
+                
+                if (!sleep || !weight) {
+                    this.showToast('⚠️ Please enter sleep and weight!');
+                    return;
+                }
+                
+                const tasksPercent = this.getTaskCompletionPercent();
+                if (tasksPercent < 40 && this.getTasks().length > 0) {
+                    if (!confirm(`⚠️ Your task completion is only ${tasksPercent}%. Continue?`)) {
+                        return;
+                    }
+                }
+                
+                const checklistPercent = this.getOverallChecklistPercent();
+                const waterPercent = Math.round((this.waterOz / this.WATER_GOAL) * 100);
+                const sleepPercent = Math.round((sleep / 8.5) * 100);
+                const disciplineScore = Math.round((checklistPercent + waterPercent + sleepPercent + tasksPercent) / 4);
+                
+                const todayData = {
+                    date: new Date().toDateString(),
+                    checklistPercent,
+                    water: this.waterOz,
+                    sleep,
+                    weight,
+                    tasksPercent,
+                    disciplineScore
+                };
+                
+                let history = this.getHistory();
+                history = history.filter(e => e.date !== todayData.date);
+                history.push(todayData);
+                localStorage.setItem('dailyHistory', JSON.stringify(history));
+                
+                if (disciplineScore === 100) {
+                    this.showToast('🎉 PERFECT DAY! 100% DISCIPLINE! 🎉', true);
+                } else {
+                    this.showToast(`✅ Progress saved! ${disciplineScore}% discipline score`);
+                }
+                
+                setTimeout(() => {
+                    this.resetDailyData();
+                    this.updateDashboard();
+                    this.switchTab('progress');
+                }, 2000);
+            },
+            
+            resetDailyData() {
+                document.querySelectorAll('.checklist-checkbox').forEach(cb => cb.checked = false);
+                this.waterOz = 0;
+                this.updateWaterProgress();
+                this.saveTasks([]);
+                this.renderTasks();
+                this.saveChecklistState();
+                this.saveWaterState();
+            },
+            
+            prefillLastValues() {
+                const history = this.getHistory();
+                if (history.length) {
+                    const last = history[history.length - 1];
+                    document.getElementById('sleepInput').value = last.sleep || '';
+                    document.getElementById('weightInput').value = last.weight || '';
+                }
+            },
+            
+            getHistory() {
+                return JSON.parse(localStorage.getItem('dailyHistory') || '[]');
+            },
+            
+            // Dashboard updates
+            updateDashboard() {
+                const history = this.getHistory();
+                
+                if (!history.length) {
+                    this.updateSummaryStats(null);
+                    this.updateWeeklyMonthlyStats(null);
+                    this.updateCompareToLastWeek(null);
+                    this.updateHistoryTable([]);
+                    this.updateCalendarHeatmap([]);
+                    return;
+                }
+                
+                this.updateSummaryStats(history);
+                this.updateWeeklyMonthlyStats(history);
+                this.updateCompareToLastWeek(history);
+                this.updateCharts(history);
+                this.updateHistoryTable(history);
+                this.updateCalendarHeatmap(history);
+            },
+            
+            updateSummaryStats(history) {
+                const ids = ['avgChecklist', 'avgWater', 'avgSleep', 'avgTasks', 'weightChange'];
+                
+                if (!history || !history.length) {
+                    ids.forEach(id => document.getElementById(id).textContent = '--');
+                    return;
+                }
+                
+                const avg = (arr, key) => arr.reduce((sum, d) => sum + d[key], 0) / arr.length;
+                
+                document.getElementById('avgChecklist').textContent = Math.round(avg(history, 'checklistPercent')) + '%';
+                document.getElementById('avgWater').textContent = Math.round(avg(history, 'water'));
+                document.getElementById('avgSleep').textContent = avg(history, 'sleep').toFixed(1);
+                document.getElementById('avgTasks').textContent = Math.round(avg(history, 'tasksPercent')) + '%';
+                
+                const weightDelta = (history[history.length - 1].weight - history[0].weight).toFixed(1);
+                document.getElementById('weightChange').textContent = (weightDelta >= 0 ? '+' : '') + weightDelta;
+            },
+            
+            updateWeeklyMonthlyStats(history) {
+                const ids = ['week7Checklist', 'week7Water', 'week7Sleep', 'week7Tasks', 'week7Discipline',
+                            'month30Checklist', 'month30Water', 'month30Sleep', 'month30Tasks', 'month30Discipline',
+                            'bestDay', 'worstDay'];
+                
+                if (!history || !history.length) {
+                    ids.forEach(id => document.getElementById(id).textContent = '--');
+                    return;
+                }
+                
+                const today = new Date();
+                const filterByDays = (days) => history.filter(d => {
+                    const daysDiff = Math.floor((today - new Date(d.date)) / (1000 * 60 * 60 * 24));
+                    return daysDiff < days;
+                });
+                
+                const last7Days = filterByDays(7);
+                const last30Days = filterByDays(30);
+                const avg = (arr, key) => arr.length ? arr.reduce((sum, d) => sum + d[key], 0) / arr.length : 0;
+                
+                document.getElementById('week7Checklist').textContent = Math.round(avg(last7Days, 'checklistPercent')) + '%';
+                document.getElementById('week7Water').textContent = Math.round(avg(last7Days, 'water'));
+                document.getElementById('week7Sleep').textContent = avg(last7Days, 'sleep').toFixed(1);
+                document.getElementById('week7Tasks').textContent = Math.round(avg(last7Days, 'tasksPercent')) + '%';
+                document.getElementById('week7Discipline').textContent = Math.round(avg(last7Days, 'disciplineScore')) + '%';
+                
+                document.getElementById('month30Checklist').textContent = Math.round(avg(last30Days, 'checklistPercent')) + '%';
+                document.getElementById('month30Water').textContent = Math.round(avg(last30Days, 'water'));
+                document.getElementById('month30Sleep').textContent = avg(last30Days, 'sleep').toFixed(1);
+                document.getElementById('month30Tasks').textContent = Math.round(avg(last30Days, 'tasksPercent')) + '%';
+                document.getElementById('month30Discipline').textContent = Math.round(avg(last30Days, 'disciplineScore')) + '%';
+                
+                const sortedByDiscipline = [...history].sort((a, b) => b.disciplineScore - a.disciplineScore);
+                if (sortedByDiscipline.length) {
+                    const best = sortedByDiscipline[0];
+                    const worst = sortedByDiscipline[sortedByDiscipline.length - 1];
+                    document.getElementById('bestDay').textContent = `${best.date} (${best.disciplineScore}%)`;
+                    document.getElementById('worstDay').textContent = `${worst.date} (${worst.disciplineScore}%)`;
+                }
+            },
+            
+            updateCompareToLastWeek(history) {
+                const ids = ['sleepChange', 'waterChange', 'progressChange', 'weekWeightChange', 'disciplineChange'];
+                
+                if (!history || history.length < 7) {
+                    ids.forEach(id => {
+                        const el = document.getElementById(id);
+                        el.textContent = '--';
+                        el.className = 'stat-change';
+                    });
+                    return;
+                }
+                
+                const today = new Date();
+                const filterByDays = (start, end) => history.filter(d => {
+                    const daysDiff = Math.floor((today - new Date(d.date)) / (1000 * 60 * 60 * 24));
+                    return daysDiff >= start && daysDiff < end;
+                });
+                
+                const thisWeek = filterByDays(0, 7);
+                const lastWeek = filterByDays(7, 14);
+                
+                if (!thisWeek.length || !lastWeek.length) {
+                    this.updateCompareToLastWeek(null);
+                    return;
+                }
+                
+                const avg = (arr, key) => arr.reduce((sum, d) => sum + d[key], 0) / arr.length;
+                
+                const changes = {
+                    sleep: avg(thisWeek, 'sleep') - avg(lastWeek, 'sleep'),
+                    water: avg(thisWeek, 'water') - avg(lastWeek, 'water'),
+                    progress: avg(thisWeek, 'checklistPercent') - avg(lastWeek, 'checklistPercent'),
+                    weight: thisWeek[thisWeek.length - 1].weight - lastWeek[lastWeek.length - 1].weight,
+                    discipline: avg(thisWeek, 'disciplineScore') - avg(lastWeek, 'disciplineScore')
+                };
+                
+                const formatChange = (value, unit = '', decimals = 1) => {
+                    const arrow = value > 0 ? '↑' : value < 0 ? '↓' : '→';
+                    const className = value > 0 ? 'up' : value < 0 ? 'down' : 'neutral';
+                    const formatted = Math.abs(value).toFixed(decimals);
+                    return { text: `${arrow} ${formatted}${unit}`, className };
+                };
+                
+                const updates = {
+                    sleepChange: formatChange(changes.sleep, 'h'),
+                    waterChange: formatChange(changes.water, 'oz', 0),
+                    progressChange: formatChange(changes.progress, '%', 0),
+                    weekWeightChange: formatChange(changes.weight, 'lbs'),
+                    disciplineChange: formatChange(changes.discipline, '%', 0)
+                };
+                
+                Object.keys(updates).forEach(id => {
+                    const el = document.getElementById(id);
+                    el.textContent = updates[id].text;
+                    el.className = `stat-change ${updates[id].className}`;
+                });
+            },
+            
+            updateCharts(history) {
+                const dates = history.map(d => new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+                
+                const chartConfig = {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { 
+                        legend: { labels: { color: '#fff' } }
+                    },
+                    scales: {
+                        y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            this.showDayDetails(history[elements[0].index]);
+                        }
+                    }
+                };
+                
+                // Weight Chart
+                if (this.charts.weight) this.charts.weight.destroy();
+                this.charts.weight = new Chart(document.getElementById('weightChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Weight (lbs)',
+                            data: history.map(d => d.weight),
+                            borderColor: '#00d4ff',
+                            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: chartConfig
+                });
+
+                // Progress Chart
+                if (this.charts.progress) this.charts.progress.destroy();
+                this.charts.progress = new Chart(document.getElementById('progressChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Daily Progress %',
+                            data: history.map(d => d.checklistPercent),
+                            backgroundColor: 'rgba(0, 212, 255, 0.6)',
+                            borderColor: '#00d4ff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: { ...chartConfig, scales: { ...chartConfig.scales, y: { ...chartConfig.scales.y, beginAtZero: true, max: 100 } } }
+                });
+
+                // Water Chart
+                if (this.charts.water) this.charts.water.destroy();
+                this.charts.water = new Chart(document.getElementById('waterChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Water (oz)',
+                            data: history.map(d => d.water),
+                            borderColor: '#00d4ff',
+                            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: chartConfig
+                });
+
+                // Sleep Chart
+                if (this.charts.sleep) this.charts.sleep.destroy();
+                this.charts.sleep = new Chart(document.getElementById('sleepChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Sleep (hours)',
+                            data: history.map(d => d.sleep),
+                            borderColor: '#ffd700',
+                            backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: chartConfig
+                });
+
+                // Discipline Chart
+                if (this.charts.discipline) this.charts.discipline.destroy();
+                this.charts.discipline = new Chart(document.getElementById('disciplineChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Discipline Score %',
+                            data: history.map(d => d.disciplineScore),
+                            borderColor: '#ff00ff',
+                            backgroundColor: 'rgba(255, 0, 255, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3
+                        }]
+                    },
+                    options: { ...chartConfig, scales: { ...chartConfig.scales, y: { ...chartConfig.scales.y, beginAtZero: true, max: 100 } } }
+                });
+            },
+            
+            updateCalendarHeatmap(history) {
+                const container = document.getElementById('calendarHeatmap');
+                
+                if (!history || !history.length) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No data to display yet.</p>';
+                    return;
+                }
+                
+                const today = new Date();
+                const days = [];
+                
+                for (let i = 34; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toDateString();
+                    const dayData = history.find(h => h.date === dateStr);
+                    
+                    days.push({
+                        date: dateStr,
+                        data: dayData,
+                        day: date.getDate()
+                    });
+                }
+                
+                container.innerHTML = days.map(d => {
+                    if (!d.data) {
+                        return `<div class="calendar-day empty">${d.day}</div>`;
+                    }
+                    
+                    const percent = d.data.checklistPercent;
+                    let className = 'poor';
+                    if (percent >= 80) className = 'excellent';
+                    else if (percent >= 60) className = 'good';
+                    else if (percent >= 40) className = 'moderate';
+                    
+                    return `<div class="calendar-day ${className}" onclick='app.showDayDetails(${JSON.stringify(d.data).replace(/'/g, "&#39;")})'>${d.day}</div>`;
+                }).join('');
+            },
+            
+            updateHistoryTable(history) {
+                const tbody = document.getElementById('historyTableBody');
+                
+                if (!history.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No data yet. Complete your first day!</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = [...history].reverse().map(d => `
+                    <tr style="cursor: pointer;" onclick='app.showDayDetails(${JSON.stringify(d).replace(/'/g, "&#39;")})'>
+                        <td>${d.date}</td>
+                        <td>${d.checklistPercent}%</td>
+                        <td>${d.tasksPercent}%</td>
+                        <td>${d.water}</td>
+                        <td>${d.sleep}</td>
+                        <td>${d.weight}</td>
+                        <td>${d.disciplineScore}%</td>
+                    </tr>
+                `).join('');
+            },
+            
+            toggleHistoryTable() {
+                const content = document.getElementById('historyContent');
+                const arrow = document.getElementById('historyArrow');
+                content.classList.toggle('open');
+                arrow.classList.toggle('down');
+            },
+            
+            // Modal functions
+            showDayDetails(dayData) {
+                const modal = document.getElementById('dayModal');
+                const title = document.getElementById('modalDayTitle');
+                const content = document.getElementById('modalDayContent');
+                
+                title.textContent = `📅 ${dayData.date}`;
+                
+                content.innerHTML = `
+                    <div class="modal-section">
+                        <div class="modal-label">📊 Daily Progress</div>
+                        <div class="modal-value">${dayData.checklistPercent}%</div>
+                    </div>
+                    <div class="modal-section">
+                        <div class="modal-label">✅ Tasks Completion</div>
+                        <div class="modal-value">${dayData.tasksPercent}%</div>
+                    </div>
+                    <div class="modal-section">
+                        <div class="modal-label">💧 Water Intake</div>
+                        <div class="modal-value">${dayData.water} oz</div>
+                    </div>
+                    <div class="modal-section">
+                        <div class="modal-label">💤 Sleep</div>
+                        <div class="modal-value">${dayData.sleep} hours</div>
+                    </div>
+                    <div class="modal-section">
+                        <div class="modal-label">⚖️ Weight</div>
+                        <div class="modal-value">${dayData.weight} lbs</div>
+                    </div>
+                    <div class="modal-section">
+                        <div class="modal-label">🎯 Discipline Score</div>
+                        <div class="modal-value" style="color: ${dayData.disciplineScore >= 80 ? 'var(--accent-green)' : dayData.disciplineScore >= 60 ? 'var(--accent-blue)' : 'var(--accent-yellow)'}">
+                            ${dayData.disciplineScore}%
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.add('show');
+            },
+            
+            closeDayModal() {
+                document.getElementById('dayModal').classList.remove('show');
+            },
+            
+            openSettingsModal() {
+                document.getElementById('settingsModal').classList.add('show');
+            },
+            
+            closeSettingsModal() {
+                document.getElementById('settingsModal').classList.remove('show');
+            },
+            
+            // Backup and restore
+            downloadBackup() {
+                const backup = {
+                    version: '1.0',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        dailyHistory: localStorage.getItem('dailyHistory'),
+                        waterState: localStorage.getItem('waterState'),
+                        checklistState: localStorage.getItem('checklistState'),
+                        dailyTasks: localStorage.getItem('dailyTasks'),
+                        lastCheckDate: localStorage.getItem('lastCheckDate')
+                    }
+                };
+                
+                const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `aami-dashboard-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                this.showToast('📥 Backup downloaded successfully!');
+            },
+            
+            uploadBackup(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const backup = JSON.parse(e.target.result);
+                        
+                        if (!backup.version || !backup.data) {
+                            throw new Error('Invalid backup format');
+                        }
+                        
+                        Object.keys(backup.data).forEach(key => {
+                            if (backup.data[key]) {
+                                localStorage.setItem(key, backup.data[key]);
+                            }
+                        });
+                        
+                        this.showToast('✅ Backup restored successfully! Reloading...');
+                        setTimeout(() => location.reload(), 1500);
+                        
+                    } catch (error) {
+                        alert('❌ Error: Invalid backup file format');
+                        console.error('Backup restore error:', error);
+                    }
+                };
+                reader.readAsText(file);
+                
+                event.target.value = '';
+            },
+            
+            clearHistory() {
+                if (!confirm('⚠️ Delete ALL progress history? This cannot be undone!')) return;
+                
+                localStorage.removeItem('dailyHistory');
+                this.updateDashboard();
+                this.showToast('🗑️ History cleared');
+                this.closeSettingsModal();
+            },
+            
+            resetTodayOnly() {
+                if (!confirm('🔄 Reset all of today\'s progress? (Sleep, weight, water, tasks, checklist)')) return;
+                
+                this.resetDailyData();
+                document.getElementById('sleepInput').value = '';
+                document.getElementById('weightInput').value = '';
+                this.showToast('🔄 Today reset successfully!');
+                this.closeSettingsModal();
+            },
+            
+            // New day detection
+            checkForNewDay() {
+                const today = new Date().toDateString();
+                const lastCheck = localStorage.getItem('lastCheckDate');
+                
+                if (lastCheck && lastCheck !== today) {
+                    this.resetDailyData();
+                    this.prefillLastValues();
+                }
+                
+                localStorage.setItem('lastCheckDate', today);
+            },
+            
+            // Utility function
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        };
+        
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html
